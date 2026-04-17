@@ -16,7 +16,7 @@ label{display:block;font-size:13px;color:#aaa;margin-bottom:6px;margin-top:14px}
 .tog.on{background:#4c4}
 .knob{width:22px;height:22px;background:#fff;border-radius:11px;position:absolute;top:2px;left:2px;transition:left .2s}
 .tog.on .knob{left:24px}
-button{display:block;width:100%;margin-top:20px;padding:14px;background:#e07000;border:none;border-radius:8px;color:#fff;font-size:16px;font-weight:bold;cursor:pointer}
+a#saveBtn{display:block;width:100%;margin-top:20px;padding:14px;background:#e07000;border:none;border-radius:8px;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;text-align:center;text-decoration:none}
 </style>
 </head>
 <body>
@@ -27,7 +27,7 @@ button{display:block;width:100%;margin-top:20px;padding:14px;background:#e07000;
 <div class="grid" id="fig"></div>
 <div class="row"><span>Second Hand</span><div class="tog" id="tsec" onclick="tog(this)"><div class="knob"></div></div></div>
 <div class="row"><span>Show Date</span><div class="tog" id="tdat" onclick="tog(this)"><div class="knob"></div></div></div>
-<button onclick="save()">Save Settings</button>
+<a id="saveBtn" href="#">Save Settings</a>
 
 <script>
 var COLORS = [
@@ -44,18 +44,6 @@ var COLORS = [
 var bgColor = 0xFFFF00;
 var figColor = 0xAA0000;
 
-// Read defaults from URL if passed
-var params = {};
-try {
-  var qs = location.search.slice(1).split('&');
-  qs.forEach(function(p) {
-    var kv = p.split('=');
-    if (kv.length === 2) params[kv[0]] = decodeURIComponent(kv[1]);
-  });
-  if (params.bg)  bgColor  = parseInt(params.bg);
-  if (params.fig) figColor = parseInt(params.fig);
-} catch(e) {}
-
 function h6(n) { return ('000000' + n.toString(16)).slice(-6); }
 
 function buildGrid(id, selected) {
@@ -65,6 +53,7 @@ function buildGrid(id, selected) {
     d.className = 'swatch' + (c === selected ? ' sel' : '');
     d.style.background = '#' + h6(c);
     d.dataset.v = c;
+    d.dataset.g = id;
     d.onclick = function() {
       document.querySelectorAll('[data-g=' + id + ']').forEach(function(e) {
         e.classList.remove('sel');
@@ -72,8 +61,8 @@ function buildGrid(id, selected) {
       d.classList.add('sel');
       if (id === 'bg') bgColor = c;
       else figColor = c;
+      updateSaveLink();
     };
-    d.dataset.g = id;
     g.appendChild(d);
   });
 }
@@ -81,18 +70,20 @@ function buildGrid(id, selected) {
 buildGrid('bg', bgColor);
 buildGrid('fig', figColor);
 
-// Set toggle states from URL params
-if (params.sec === '1') document.getElementById('tsec').classList.add('on');
-if (params.dat === '1') document.getElementById('tdat').classList.add('on');
+function tog(el) {
+  el.classList.toggle('on');
+  updateSaveLink();
+}
 
-function tog(el) { el.classList.toggle('on'); }
-
-function save() {
+function updateSaveLink() {
   var sec = document.getElementById('tsec').classList.contains('on') ? 1 : 0;
   var dat = document.getElementById('tdat').classList.contains('on') ? 1 : 0;
   var result = JSON.stringify({ b: bgColor, f: figColor, s: sec, d: dat });
-  location.href = 'pebblejs://ready#' + encodeURIComponent(result);
+  document.getElementById('saveBtn').href = 'pebblejs://ready#' + encodeURIComponent(result);
 }
+
+// Initialize the link
+updateSaveLink();
 </script>
 </body>
 </html>
