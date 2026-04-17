@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keith Haring Clock Settings</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#1c1c1c;color:#fff;padding:12px}
+h2{text-align:center;margin-bottom:16px;font-size:18px}
+label{display:block;font-size:13px;color:#aaa;margin-bottom:6px;margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;margin-bottom:4px}
+.swatch{width:100%;padding-top:100%;border-radius:2px;cursor:pointer;border:2px solid transparent}
+.swatch.sel{border-color:#fff;border-width:3px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #333}
+.tog{width:48px;height:26px;background:#444;border-radius:13px;position:relative;cursor:pointer;transition:background .2s}
+.tog.on{background:#4c4}
+.knob{width:22px;height:22px;background:#fff;border-radius:11px;position:absolute;top:2px;left:2px;transition:left .2s}
+.tog.on .knob{left:24px}
+button{display:block;width:100%;margin-top:20px;padding:14px;background:#e07000;border:none;border-radius:8px;color:#fff;font-size:16px;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<h2>Keith Haring Clock</h2>
+<label>Background Color</label>
+<div class="grid" id="bg"></div>
+<label>Figure Color</label>
+<div class="grid" id="fig"></div>
+<div class="row"><span>Second Hand</span><div class="tog" id="tsec" onclick="tog(this)"><div class="knob"></div></div></div>
+<div class="row"><span>Show Date</span><div class="tog" id="tdat" onclick="tog(this)"><div class="knob"></div></div></div>
+<button onclick="save()">Save Settings</button>
+
+<script>
+var COLORS = [
+  0x000000,0x001455,0x0000AA,0x0000FF,0x005500,0x005555,0x0055AA,0x0055FF,
+  0x00AA00,0x00AA55,0x00AAAA,0x00AAFF,0x00FF00,0x00FF55,0x00FFAA,0x00FFFF,
+  0x550000,0x550055,0x5500AA,0x5500FF,0x555500,0x555555,0x5555AA,0x5555FF,
+  0x55AA00,0x55AA55,0x55AAAA,0x55AAFF,0x55FF00,0x55FF55,0x55FFAA,0x55FFFF,
+  0xAA0000,0xAA0055,0xAA00AA,0xAA00FF,0xAA5500,0xAA5555,0xAA55AA,0xAA55FF,
+  0xAAAA00,0xAAAA55,0xAAAAAA,0xAAAAFF,0xAAFF00,0xAAFF55,0xAAFFAA,0xAAFFFF,
+  0xFF0000,0xFF0055,0xFF00AA,0xFF00FF,0xFF5500,0xFF5555,0xFF55AA,0xFF55FF,
+  0xFFAA00,0xFFAA55,0xFFAAAA,0xFFAAFF,0xFFFF00,0xFFFF55,0xFFFFAA,0xFFFFFF
+];
+
+var bgColor = 0xFFFF00;
+var figColor = 0xAA0000;
+
+// Read defaults from URL if passed
+var params = {};
+try {
+  var qs = location.search.slice(1).split('&');
+  qs.forEach(function(p) {
+    var kv = p.split('=');
+    if (kv.length === 2) params[kv[0]] = decodeURIComponent(kv[1]);
+  });
+  if (params.bg)  bgColor  = parseInt(params.bg);
+  if (params.fig) figColor = parseInt(params.fig);
+} catch(e) {}
+
+function h6(n) { return ('000000' + n.toString(16)).slice(-6); }
+
+function buildGrid(id, selected) {
+  var g = document.getElementById(id);
+  COLORS.forEach(function(c) {
+    var d = document.createElement('div');
+    d.className = 'swatch' + (c === selected ? ' sel' : '');
+    d.style.background = '#' + h6(c);
+    d.dataset.v = c;
+    d.onclick = function() {
+      document.querySelectorAll('[data-g=' + id + ']').forEach(function(e) {
+        e.classList.remove('sel');
+      });
+      d.classList.add('sel');
+      if (id === 'bg') bgColor = c;
+      else figColor = c;
+    };
+    d.dataset.g = id;
+    g.appendChild(d);
+  });
+}
+
+buildGrid('bg', bgColor);
+buildGrid('fig', figColor);
+
+// Set toggle states from URL params
+if (params.sec === '1') document.getElementById('tsec').classList.add('on');
+if (params.dat === '1') document.getElementById('tdat').classList.add('on');
+
+function tog(el) { el.classList.toggle('on'); }
+
+function save() {
+  var sec = document.getElementById('tsec').classList.contains('on') ? 1 : 0;
+  var dat = document.getElementById('tdat').classList.contains('on') ? 1 : 0;
+  var result = JSON.stringify({ b: bgColor, f: figColor, s: sec, d: dat });
+  location.href = 'pebblejs://ready#' + encodeURIComponent(result);
+}
+</script>
+</body>
+</html>
