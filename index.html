@@ -16,7 +16,7 @@ label{display:block;font-size:13px;color:#aaa;margin-bottom:6px;margin-top:14px}
 .tog.on{background:#4c4}
 .knob{width:22px;height:22px;background:#fff;border-radius:11px;position:absolute;top:2px;left:2px;transition:left .2s}
 .tog.on .knob{left:24px}
-a#saveBtn{display:block;width:100%;margin-top:20px;padding:14px;background:#e07000;border:none;border-radius:8px;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;text-align:center;text-decoration:none}
+button{display:block;width:100%;margin-top:20px;padding:14px;background:#e07000;border:none;border-radius:8px;color:#fff;font-size:16px;font-weight:bold;cursor:pointer}
 </style>
 </head>
 <body>
@@ -27,7 +27,7 @@ a#saveBtn{display:block;width:100%;margin-top:20px;padding:14px;background:#e070
 <div class="grid" id="fig"></div>
 <div class="row"><span>Second Hand</span><div class="tog" id="tsec" onclick="tog(this)"><div class="knob"></div></div></div>
 <div class="row"><span>Show Date</span><div class="tog" id="tdat" onclick="tog(this)"><div class="knob"></div></div></div>
-<a id="saveBtn" href="#">Save Settings</a>
+<button onclick="save()">Save Settings</button>
 
 <script>
 var COLORS = [
@@ -44,6 +44,17 @@ var COLORS = [
 var bgColor = 0xFFFF00;
 var figColor = 0xAA0000;
 
+// Get return_to parameter - this is what the Pebble app passes on Android
+function getParam(name, def) {
+  var query = location.search.substring(1).split('&');
+  for (var i = 0; i < query.length; i++) {
+    var pair = query[i].split('=');
+    if (decodeURIComponent(pair[0]) === name) return decodeURIComponent(pair[1]);
+  }
+  return def;
+}
+var return_to = getParam('return_to', 'pebblejs://close#');
+
 function h6(n) { return ('000000' + n.toString(16)).slice(-6); }
 
 function buildGrid(id, selected) {
@@ -52,7 +63,6 @@ function buildGrid(id, selected) {
     var d = document.createElement('div');
     d.className = 'swatch' + (c === selected ? ' sel' : '');
     d.style.background = '#' + h6(c);
-    d.dataset.v = c;
     d.dataset.g = id;
     d.onclick = function() {
       document.querySelectorAll('[data-g=' + id + ']').forEach(function(e) {
@@ -61,7 +71,6 @@ function buildGrid(id, selected) {
       d.classList.add('sel');
       if (id === 'bg') bgColor = c;
       else figColor = c;
-      updateSaveLink();
     };
     g.appendChild(d);
   });
@@ -70,20 +79,14 @@ function buildGrid(id, selected) {
 buildGrid('bg', bgColor);
 buildGrid('fig', figColor);
 
-function tog(el) {
-  el.classList.toggle('on');
-  updateSaveLink();
-}
+function tog(el) { el.classList.toggle('on'); }
 
-function updateSaveLink() {
+function save() {
   var sec = document.getElementById('tsec').classList.contains('on') ? 1 : 0;
   var dat = document.getElementById('tdat').classList.contains('on') ? 1 : 0;
   var result = JSON.stringify({ b: bgColor, f: figColor, s: sec, d: dat });
-  document.getElementById('saveBtn').href = 'pebblejs://ready#' + encodeURIComponent(result);
+  document.location = return_to + encodeURIComponent(result);
 }
-
-// Initialize the link
-updateSaveLink();
 </script>
 </body>
 </html>
